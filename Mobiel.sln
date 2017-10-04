@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Mobiel", "Mobiel\Mobiel.fsproj", "{62B3AE48-EBB8-429A-8C48-D8ECDCEB9C7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mobiel.Tests", "Mobiel.Tests\Mobiel.Tests.csproj", "{31CF617F-71FC-4428-AE59-B0B4C667F371}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mobiel.UI", "Mobiel.UI\Mobiel.UI.csproj", "{44DF642C-2EC7-4E09-BB57-0E1E9942186B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{62B3AE48-EBB8-429A-8C48-D8ECDCEB9C7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62B3AE48-EBB8-429A-8C48-D8ECDCEB9C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62B3AE48-EBB8-429A-8C48-D8ECDCEB9C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62B3AE48-EBB8-429A-8C48-D8ECDCEB9C7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31CF617F-71FC-4428-AE59-B0B4C667F371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31CF617F-71FC-4428-AE59-B0B4C667F371}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31CF617F-71FC-4428-AE59-B0B4C667F371}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31CF617F-71FC-4428-AE59-B0B4C667F371}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44DF642C-2EC7-4E09-BB57-0E1E9942186B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44DF642C-2EC7-4E09-BB57-0E1E9942186B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44DF642C-2EC7-4E09-BB57-0E1E9942186B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44DF642C-2EC7-4E09-BB57-0E1E9942186B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
