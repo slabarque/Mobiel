@@ -14,6 +14,5 @@ namespace Mobiel.UI
     /// </summary>
     public partial class App : Application
     {
-        Polygon
     }
 }

@@ -5,8 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Mobiel.UI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="900" Width="600">
     <Grid>
-        
+        <Canvas x:Name="canvas" Background="Transparent" >
+            <Canvas.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="0.5" />
+                    <ScaleTransform ScaleY="-0.5" />
+                    <TranslateTransform Y="750" />
+                    <TranslateTransform X="60" />
+                </TransformGroup>
+            </Canvas.RenderTransform>
+        </Canvas>
     </Grid>
 </Window>

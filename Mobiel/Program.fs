@@ -28,13 +28,15 @@ let main argv =
     let tubeThickness = float 25
     let rectangleHeight = float 1000
     let rectangleWidth = float 700
-    let aplhaInDegrees = float 30
+    let aplhaInDegrees = float 15
     let attachmentHook = float 30
+    let chairThicknes = float 20 //t: thickness of the wood
+    let chairWidth = float 500
 
-    let metalDensity = float 1.394 //g/mm
-    let coefficientD = 2
-    let coefficientB = 2
-    
+    let metalDensityStrong = float 1.77 //g/mm
+    let metalDensityNormal = float 2.47 //g/mm
+    let woodDensity = float 0.00093 //g/mm3
+    let coefficientDoubles = 2
     
     let lengthD x z d=
          x-d-z
@@ -44,6 +46,22 @@ let main argv =
 
     let degrees radians =
         radians*float 180/Math.PI
+    
+    let chairBottom x t d =
+        let shape = new Polygon()
+        shape.Points <- new PointCollection([new Point(float 0 , d); new Point(x, d); new Point(x, d + t);new Point(float 0, d+ t)])
+        shape
+    
+    let chairBack x r t d alpha =
+        let x2 = x+r*Math.Sin(radians alpha)
+        let y2 = d+r*Math.Cos(radians alpha)
+        let x3 = x+r*Math.Sin(radians alpha)-t*Math.Cos(radians alpha)
+        let y3 = y2+r*Math.Cos(radians alpha)+t*Math.Sin(radians alpha)
+        let x4 = x-t*Math.Cos(radians alpha)
+        let y4 = d+t*Math.Sin(radians alpha)
+        let shape = new Polygon()
+        shape.Points <- new PointCollection([new Point(float x , d); new Point(x2, y2); new Point(x3, y3);new Point(x4, y4)])
+        shape
 
     let polygonA x z d h =
         let x1 = lengthD x z d
@@ -87,8 +105,15 @@ let main argv =
         shape.Points <- new PointCollection([new Point(x1 , d); new Point(x1 + d, d); new Point(x1+d, d+ h);new Point(x1, d+ h)])
         shape
 
-    let weight length =
-        length * metalDensity
+    let weightMetalStrong length =
+        length * metalDensityStrong
+    
+    let weightMetalNormal length =
+        length * metalDensityNormal
+
+    let weightWood length width height =
+        let w = length * width * height * woodDensity
+        w
 
     let centroid (polygon:Polygon) =
         let seed = {
@@ -117,6 +142,7 @@ let main argv =
         let  hook = new Point(xHook, yHook)
         let lengthCos = yHook - center.Y
         let lengthLeg = Math.Sqrt (Math.Pow(xHook-center.X,float 2)+Math.Pow(yHook-center.Y,float 2))
+        printfn "lengthSin: %A" (center.X - xHook)
         printfn "lengthCos: %A" lengthCos
         printfn "lengthLeg: %A" lengthLeg
 
@@ -130,21 +156,41 @@ let main argv =
     let F = centroid (polygonF chairBase tubeThickness chairRest aplhaInDegrees)
     let A = centroid (polygonA chairBase chairIndent tubeThickness rectangleHeight)
     let C = centroid (polygonC chairBase chairIndent tubeThickness)
-    let weightD = weight (lengthD chairBase chairIndent tubeThickness)
-    let weightB = weight rectangleHeight
-    let weightE = weight chairIndent
-    let weightF = weight chairRest
-    let weightA = weight (rectangleWidth+tubeThickness+tubeThickness)
-    let weightC = weight (rectangleWidth+tubeThickness+tubeThickness)
-    let center = centerOfGravity [{point=B;weight=weightB*float coefficientB};
-                                    {point=D;weight=weightD*float coefficientB};
-                                    {point=E;weight=weightE*float coefficientB};
-                                    {point=F;weight=weightF*float coefficientB};
+    let G = centroid (chairBottom chairBase chairThicknes tubeThickness)
+    let H = centroid (chairBack chairBase chairRest chairThicknes tubeThickness aplhaInDegrees)
+    let weightA = weightMetalStrong (rectangleWidth+tubeThickness+tubeThickness)
+    let weightB = (weightMetalNormal rectangleHeight)*float coefficientDoubles
+    let weightC = weightMetalStrong (rectangleWidth+tubeThickness+tubeThickness)
+    let weightD = weightMetalNormal (lengthD chairBase chairIndent tubeThickness)*float coefficientDoubles
+    let weightE = weightMetalNormal chairIndent*float coefficientDoubles
+    let weightF = weightMetalNormal chairRest*float coefficientDoubles
+    let weightG = weightWood chairWidth chairBase chairThicknes
+    let weightH = weightWood chairWidth chairRest chairThicknes
+    let center = centerOfGravity [{point=B;weight=weightB};
+                                    {point=D;weight=weightD};
+                                    {point=E;weight=weightE};
+                                    {point=F;weight=weightF};
                                     {point=A;weight=weightA};
                                     {point=C;weight=weightC};
+                                    {point=G;weight=weightG};
+                                    {point=H;weight=weightH};
                                 ]
 
     let angle = seatAngle center chairBase chairIndent tubeThickness rectangleHeight attachmentHook
+
+    printfn "x (chairBase): %A" chairBase
+    printfn "z (chairIndent): %A" chairIndent 
+    printfn "r (chairRest): %A" chairRest
+    printfn "d (tubeThickness): %A" tubeThickness
+    printfn "h (rectangleHeight): %A"rectangleHeight
+    printfn "b (rectangleWidth): %A"rectangleWidth
+    printfn "a (attachmentHook): %A"attachmentHook
+    printfn "t (chairThicknes): %A"chairThicknes
+    printfn "aplhaInDegrees: %A"aplhaInDegrees
+    printfn "chairWidth: %A"chairWidth
+    printfn "metalDensityStrong (g/mm): %A"metalDensityStrong//g/mm
+    printfn "metalDensityNormal (g/mm): %A"metalDensityNormal//g/mm
+    printfn "woodDensity (g/mm3): %A"woodDensity//g/mm3
 
     printfn "A: %A : %A" A weightA
     printfn "B: %A : %A" B weightB
@@ -152,6 +198,8 @@ let main argv =
     printfn "D: %A : %A" D weightD
     printfn "E: %A : %A" E weightE
     printfn "F: %A : %A" F weightF
+    printfn "G: %A : %A" G weightG
+    printfn "H: %A : %A" H weightH
     printfn "Center: %A" center
     printfn "Angle: %Adegrees" angle
     0 // return an integer exit code
