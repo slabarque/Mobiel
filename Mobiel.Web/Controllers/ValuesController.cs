@@ -12,9 +12,9 @@ namespace Mobiel.Web.Controllers
   {
     // GET api/values
     [HttpGet]
-    public Parsing.Object2D Get()
+    public Gravity.Object2D Get()
     {
-      Parsing.PartFactory factory = new Parsing.PartFactory();
+      Gravity.PartFactory factory = new Gravity.PartFactory();
 
       return factory.Create(factory.Config);
     }

@@ -5,6 +5,7 @@ open System.Collections
 open System.Collections.Generic
 open Microsoft.FSharp.Data.UnitSystems.SI.UnitNames
 open System.Windows.Input
+open FParsec.CharParsers
 
 
 module Types =
@@ -37,6 +38,9 @@ module Shared =
             | P(list) -> p
             | R(root,length, width) -> P [root;length + fst root,snd root;length + fst root,width + snd root;fst root,width + snd root]
             | _ -> failwith "oops"
+
+    let toPoint (x,y) = 
+        {X=x;Y=y}
 
 module MyShapes =
     open Types
@@ -99,6 +103,32 @@ module MyShapes =
     let Anker cfg = ( lengthD cfg ) + cfg.TubeThickness / 2.0 , cfg.RectangleHeight + 2.0 * cfg.TubeThickness + cfg.AttachmentHook
 
 module Parsing =
+    open FParsec
+    open Types
+    open MyShapes
+
+    let test p str =
+        match run p str with
+        | Success(result, _, _)   -> printfn "Success: %A" result
+        | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
+
+    
+    let str s = pstring s
+    //let sepByComma = (str ",") |> sepBy
+    //let floatCommaFloat = sepByComma pfloat
+    let coordinates = pfloat .>>. (str "," >>. pfloat)
+    let surroundedBy s1 s2 p = str s1 >>. p .>> str s2
+    let pointParser = tuple3 (coordinates |> surroundedBy "(" ")") (str "," >>. pfloat) (str "," >>. pfloat)
+    let v = run pointParser "(0,0),200,20"
+    let rect def = 
+        match def with
+            | Success(result, _, _)   -> R result
+            | Failure(errorMsg, _, _) -> failwith errorMsg
+    let X (cfg:Config) = ((rect v),10000.0<g>)
+
+open Parsing
+
+module Gravity =
     open Shared
     open Types
     open MyShapes
@@ -156,10 +186,6 @@ module Parsing =
         let x,y,w  = components|>List.fold f seed
         (({X=x/ w;Y= y/w}),w)
 
-    let gravitationalPullAngle anker center =
-        angleBetween {X=anker.X; Y=anker.Y - 100.0} anker center
-
-
     type Part ={
         Polygon:list<Point>;
         Centroid:Point;
@@ -172,12 +198,10 @@ module Parsing =
         Weight:float;
     }
 
-    let performGravitationalPull (o:Object2D) (cfg:Config) =
-        let selectMany (ab:'a -> 'b seq) (abc:'a -> 'b -> 'c) input =
-            input |> Seq.collect (fun a -> ab a |> Seq.map (fun b -> abc a b))
-        let x,y = Anker cfg
-        let anker = {X= x; Y= y}
-        let angle = gravitationalPullAngle anker o.CenterOfGravity
+    let performGravitationalPull object anker =
+        let gravitationalPullAngle anker center =   
+            angleBetween {X=anker.X; Y=anker.Y - 100.0} anker center
+        let angle = gravitationalPullAngle anker object.CenterOfGravity
         let rot = rotatePoint (degrees -angle) anker
         let mapPart part =
             { part with 
@@ -185,14 +209,11 @@ module Parsing =
                 Centroid = rot part.Centroid
                 }
         let result = 
-            {o with 
-                Parts = o.Parts |> List.map mapPart;
-                CenterOfGravity = rot o.CenterOfGravity;
+            {object with 
+                Parts = object.Parts |> List.map mapPart;
+                CenterOfGravity = rot object.CenterOfGravity;
             }
-
         result
-        //let points = o.Parts |> selectMany (fun x-> seq x.Polygon) (fun a b -> b)
-        //points |> Seq.map (rotatePoint angle anker)
     
     type PartFactory() =
         member this.Config = {
@@ -211,6 +232,9 @@ module Parsing =
             WoodDensity=0.00093;//<g/mm^3>
         }
         member this.Create cfg =
+            let v1 = v
+
+            
             let shapeForConfig s =
                 let _, weight = s cfg
                 let shape = toShape cfg (fun c->fst (s c));
@@ -219,7 +243,7 @@ module Parsing =
                     Centroid = centroid shape;
                     Weight = weight
                 }
-            let parts = [A ;B ;C ;D ;E ; F ; G ; H ] |> List.map shapeForConfig
+            let parts = [A ;B ;C ;D ;E ; F ; G ; H; X ] |> List.map shapeForConfig
             let center,weight =  parts |> List.map (fun p -> (p.Centroid, (float p.Weight))) |>  centerOfGravity 
             let result = {
                 Parts = parts;
@@ -227,7 +251,7 @@ module Parsing =
                 Weight = weight;
             }
 
-            performGravitationalPull result cfg
+            cfg |> Anker |> toPoint |>  performGravitationalPull result
 
 
 
