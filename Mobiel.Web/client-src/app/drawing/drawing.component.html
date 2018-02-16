@@ -1,5 +1,5 @@
 <div *ngIf="drawing">
-  <svg [attr.viewBox]="viewbox" [attr.transform]="transform">
+  <svg [attr.width]="width" [attr.height]="height" [attr.viewBox]="viewbox" [attr.transform]="transform">
     <svg:g *ngFor="let part of drawing.parts; let i=index" app-part [part]="part" [color]="colors[i]" />
     <svg:circle fill="red" r="7" [attr.cx]="drawing.centerOfGravity.x" [attr.cy]="drawing.centerOfGravity.y" />
     <svg:g app-arrow [point]="drawing.centerOfGravity" [length]="drawing.weight/30" [color]="'red'" />

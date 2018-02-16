@@ -10,10 +10,10 @@ import { DrawingService, Object2D, Point } from './service/drawing.service';
 export class DrawingComponent implements OnInit {
   width: number = 800;
   height: number = 1300;
-  sx: number = 0.5;
-  sy: number = -0.5;
+  sx: number = 0.40;
+  sy: number = -0.40;
   cx: number = 0;
-  cy: number = 0;
+  cy: number = 10;
   transform: string;
   viewbox: string;
   drawing: Object2D;
@@ -22,7 +22,7 @@ export class DrawingComponent implements OnInit {
 
   constructor(private drawingService: DrawingService) {
     this.transform = "matrix(" + this.sx + ", 0, 0, " + this.sy + ", " + (this.cx - this.sx * this.cx) + ", " + (this.cy - this.sy * this.cy) + ")";
-    this.viewbox = "0 0 " + this.width + " " + this.height;
+    this.viewbox = "-300 -100 " + (this.width + 100) + " " + (this.height + 100);
   }
 
   ngOnInit() {

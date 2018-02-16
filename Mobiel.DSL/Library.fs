@@ -96,6 +96,8 @@ module MyShapes =
 
     let H cfg = Rotate (90.0-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.ChairRest,cfg.ChairThicknes)),weightWood cfg (cfg.ChairRest * 1.0<mm>) (cfg.ChairWidth  * 1.0<mm>) (cfg.ChairThicknes  * 1.0<mm>) 
 
+    let Anker cfg = ( lengthD cfg ) + cfg.TubeThickness / 2.0 , cfg.RectangleHeight + 2.0 * cfg.TubeThickness + cfg.AttachmentHook
+
 module Parsing =
     open Shared
     open Types
@@ -105,17 +107,26 @@ module Parsing =
     let radians degrees =
         Math.PI*degrees/float 180
 
+    let degrees radians =
+        radians * float 180/Math.PI
+
+    let angleBetween point1 anglePoint point2 =
+        let d p1 p2 =
+            Math.Sqrt(Math.Pow(p1.X - p2.X, 2.0) + Math.Pow(p1.Y - p2.Y,2.0))
+        Math.Acos((Math.Pow(d point1 anglePoint,2.0) + Math.Pow(d point2 anglePoint, 2.0) - Math.Pow(d point1 point2, 2.0))/( 2.0 * (d point1 anglePoint) * (d point2 anglePoint) ))
+
+    let rotatePoint angle pointAnker (point:Point) = 
+        let s = sin(radians angle)
+        let c = cos(radians angle)
+        let point2 = { X = point.X - pointAnker.X; Y =  point.Y - pointAnker.Y};
+        let xnew = point2.X * c - point2.Y * s
+        let ynew = point2.X * s + point2.Y * c
+        let point3 = { X = xnew +  pointAnker.X; Y =  ynew + pointAnker.Y}
+        point3
+
     let toShape cfg (makePart:Config -> part) = 
         let rotate angle (points:list<Point>) =
-            let rotatePoint pointAnker (point:Point) = 
-                let s = sin(radians angle)
-                let c = cos(radians angle)
-                let point2 = { X = point.X - pointAnker.X; Y =  point.Y - pointAnker.Y};
-                let xnew = point2.X * c - point2.Y * s
-                let ynew = point2.X * s + point2.Y * c
-                let point3 = { X = xnew +  pointAnker.X; Y =  ynew + pointAnker.Y}
-                point3
-            let rotateAroundFirst = rotatePoint points.[0]
+            let rotateAroundFirst = rotatePoint angle points.[0]
             points |> List.map rotateAroundFirst
     
         let rec partToShape part= 
@@ -145,6 +156,10 @@ module Parsing =
         let x,y,w  = components|>List.fold f seed
         (({X=x/ w;Y= y/w}),w)
 
+    let gravitationalPullAngle anker center =
+        angleBetween {X=anker.X; Y=anker.Y - 100.0} anker center
+
+
     type Part ={
         Polygon:list<Point>;
         Centroid:Point;
@@ -157,7 +172,27 @@ module Parsing =
         Weight:float;
     }
 
+    let performGravitationalPull (o:Object2D) (cfg:Config) =
+        let selectMany (ab:'a -> 'b seq) (abc:'a -> 'b -> 'c) input =
+            input |> Seq.collect (fun a -> ab a |> Seq.map (fun b -> abc a b))
+        let x,y = Anker cfg
+        let anker = {X= x; Y= y}
+        let angle = gravitationalPullAngle anker o.CenterOfGravity
+        let rot = rotatePoint (degrees -angle) anker
+        let mapPart part =
+            { part with 
+                Polygon = part.Polygon |> List.map rot;
+                Centroid = rot part.Centroid
+                }
+        let result = 
+            {o with 
+                Parts = o.Parts |> List.map mapPart;
+                CenterOfGravity = rot o.CenterOfGravity;
+            }
 
+        result
+        //let points = o.Parts |> selectMany (fun x-> seq x.Polygon) (fun a b -> b)
+        //points |> Seq.map (rotatePoint angle anker)
     
     type PartFactory() =
         member this.Config = {
@@ -186,9 +221,15 @@ module Parsing =
                 }
             let parts = [A ;B ;C ;D ;E ; F ; G ; H ] |> List.map shapeForConfig
             let center,weight =  parts |> List.map (fun p -> (p.Centroid, (float p.Weight))) |>  centerOfGravity 
-            {
+            let result = {
                 Parts = parts;
                 CenterOfGravity = center;
                 Weight = weight;
             }
+
+            performGravitationalPull result cfg
+
+
+
+
     

@@ -140,7 +140,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../client-src/app/arrow/arrow.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<svg:line [attr.x1]=\"point.x\" [attr.y1]=\"point.y\" [attr.x2]=\"point.x\" [attr.y2]=\"point.y-length\" [attr.stroke]=\"color\"  stroke-width=\"1\"/>\r\n<svg:polygon [attr.points]=\"arrowString\" [attr.stroke]=\"color\" [attr.fill]=\"color\" />\r\n"
+module.exports = "<svg:line [attr.x1]=\"point.x\" [attr.y1]=\"point.y\" [attr.x2]=\"point.x\" [attr.y2]=\"point.y-length\" [attr.stroke]=\"color\"  stroke-width=\"2\"/>\r\n<svg:polygon [attr.points]=\"arrowString\" [attr.stroke]=\"color\" [attr.fill]=\"color\" />\r\n"
 
 /***/ }),
 
@@ -221,7 +221,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../client-src/app/drawing/drawing.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div *ngIf=\"drawing\">\r\n  <svg [attr.viewBox]=\"viewbox\" [attr.transform]=\"transform\">\r\n    <svg:g *ngFor=\"let part of drawing.parts; let i=index\" app-part [part]=\"part\" [color]=\"colors[i]\" />\r\n    <svg:circle fill=\"red\" r=\"7\" [attr.cx]=\"drawing.centerOfGravity.x\" [attr.cy]=\"drawing.centerOfGravity.y\" />\r\n    <svg:g app-arrow [point]=\"drawing.centerOfGravity\" [length]=\"drawing.weight/30\" [color]=\"'red'\" />\r\n  </svg>\r\n</div>\r\n"
+module.exports = "<div *ngIf=\"drawing\">\r\n  <svg [attr.width]=\"width\" [attr.height]=\"height\" [attr.viewBox]=\"viewbox\" [attr.transform]=\"transform\">\r\n    <svg:g *ngFor=\"let part of drawing.parts; let i=index\" app-part [part]=\"part\" [color]=\"colors[i]\" />\r\n    <svg:circle fill=\"red\" r=\"7\" [attr.cx]=\"drawing.centerOfGravity.x\" [attr.cy]=\"drawing.centerOfGravity.y\" />\r\n    <svg:g app-arrow [point]=\"drawing.centerOfGravity\" [length]=\"drawing.weight/30\" [color]=\"'red'\" />\r\n  </svg>\r\n</div>\r\n"
 
 /***/ }),
 
@@ -247,12 +247,12 @@ var DrawingComponent = /** @class */ (function () {
         this.drawingService = drawingService;
         this.width = 800;
         this.height = 1300;
-        this.sx = 0.5;
-        this.sy = -0.5;
+        this.sx = 0.40;
+        this.sy = -0.40;
         this.cx = 0;
-        this.cy = 0;
+        this.cy = 10;
         this.transform = "matrix(" + this.sx + ", 0, 0, " + this.sy + ", " + (this.cx - this.sx * this.cx) + ", " + (this.cy - this.sy * this.cy) + ")";
-        this.viewbox = "0 0 " + this.width + " " + this.height;
+        this.viewbox = "-300 -100 " + (this.width + 100) + " " + (this.height + 100);
     }
     DrawingComponent.prototype.ngOnInit = function () {
         this.createDrawing();
