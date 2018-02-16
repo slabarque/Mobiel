@@ -27,7 +27,6 @@ namespace Mobiel.UI
         {
             InitializeComponent();
 
-            File1.PartFactory factory = new File1.PartFactory();
 
             MobielConfig config = new MobielConfig();
             config.chairIndent = 250;
@@ -69,12 +68,34 @@ namespace Mobiel.UI
             //    canvas.Children.Add(centroid);
 
             //};
+            File1.PartFactory factory = new File1.PartFactory();
+            var obj = factory.Create(factory.Config);
 
-            foreach (var shape in factory.Create(factory.Config))
+            Ellipse center = new Ellipse();
+            int radius = 7;
+            center.Height = radius * 2;
+            center.Width = radius * 2;
+            center.Fill = Brushes.Red;
+            center.Stroke = Brushes.Red;
+            Canvas.SetLeft(center, obj.CenterOfGravity.Item1.X - radius);
+            Canvas.SetTop(center, obj.CenterOfGravity.Item1.Y - radius);
+            canvas.Children.Add(center);
+
+            foreach (var part in obj.Parts)
             {
-                shape.Stroke = new SolidColorBrush(colors[counter++ % colors.Count]);
-                shape.StrokeThickness = 2;
-                canvas.Children.Add(shape);
+                part.Polygon.Stroke = new SolidColorBrush(colors[counter++ % colors.Count]);
+                part.Polygon.StrokeThickness = 2;
+                canvas.Children.Add(part.Polygon);
+
+                Ellipse centroid = new Ellipse();
+                radius = 5;
+                centroid.Height = radius * 2;
+                centroid.Width = radius * 2;
+                centroid.Fill = Brushes.Black;
+                centroid.Stroke = Brushes.Black;
+                Canvas.SetLeft(centroid, part.Centroid.X - radius);
+                Canvas.SetTop(centroid, part.Centroid.Y - radius);
+                canvas.Children.Add(centroid);
             }
 
 

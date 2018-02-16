@@ -44,15 +44,11 @@ let config = {
 [<Measure>] type g
 
 let mmTom = 0.0001<metre/mm>
-let mmTom = 0.0001<kilogram/g>
+let kgTog = 0.0001<kilogram/g>
 
 let test = mmTom * 1000.0<mm>
 
-let weightByLength (materialConstant:float<g/mm>) (length:float<mm>) =
-    materialConstant * length
 
-let weightByVolume (materialConstant:float<g/mm^3>) (length:float<mm>) (width:float<mm>) (height:float<mm>) =
-    materialConstant * length
 
 type part =
     | P of (float*float) list
@@ -65,26 +61,33 @@ let RtoP p =
         | R(root,length, width) -> P [root;length + fst root,snd root;length + fst root,width + snd root;fst root,width + snd root]
         | _ -> failwith "oops"
 
+let weightByLength (materialConstant:float<g/mm>) (length:float<mm>) =
+    materialConstant * length
+
+let weightByVolume (materialConstant:float<g/mm^3>) (length:float<mm>) (width:float<mm>) (height:float<mm>) =
+    materialConstant * length * width * height
+
+let weightMetalStrong cfg = weightByLength  (cfg.MetalDensityStrong * 1.0<g/mm>)
+let weightMetalNormal cfg = weightByLength  (cfg.MetalDensityNormal * 1.0<g/mm>)
+let weightWood cfg = weightByVolume  (cfg.WoodDensity * 1.0<g/mm^3>)
+
 let lengthD cfg = cfg.ChairBase - cfg.ChairIndent - cfg.TubeThickness
 
-let A cfg = R ((lengthD cfg, cfg.TubeThickness + cfg.RectangleHeight),cfg.TubeThickness,cfg.TubeThickness)
+let A cfg = R ((lengthD cfg, cfg.TubeThickness + cfg.RectangleHeight),cfg.TubeThickness,cfg.TubeThickness),weightMetalStrong cfg ((cfg.RectangleWidth + 2.0* cfg.TubeThickness)  * 1.0<mm>)
 
-let B cfg = R ((lengthD cfg, cfg.TubeThickness), cfg.TubeThickness, cfg.RectangleHeight)
+let B cfg = R ((lengthD cfg, cfg.TubeThickness), cfg.TubeThickness, cfg.RectangleHeight),2.0 * weightMetalNormal cfg (cfg.RectangleHeight * 1.0<mm>)
 
-let C cfg = R ((lengthD cfg, 0.0),cfg.TubeThickness,cfg.TubeThickness)
+let C cfg = R ((lengthD cfg, 0.0),cfg.TubeThickness,cfg.TubeThickness),weightMetalStrong cfg ((cfg.RectangleWidth + 2.0* cfg.TubeThickness)  * 1.0<mm>)
 
-let D cfg = R ((0.0, 0.0),lengthD cfg,cfg.TubeThickness)
+let D cfg = R ((0.0, 0.0),lengthD cfg,cfg.TubeThickness),2.0 * weightMetalNormal cfg (lengthD cfg * 1.0<mm>)
 
-let E cfg = R ((cfg.ChairBase - cfg.ChairIndent, 0.0),cfg.ChairIndent, cfg.TubeThickness)
+let E cfg = R ((cfg.ChairBase - cfg.ChairIndent, 0.0),cfg.ChairIndent, cfg.TubeThickness),2.0 * weightMetalNormal cfg (cfg.ChairIndent * 1.0<mm>)
 
-let F cfg = Rotate (-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.TubeThickness, cfg.ChairRest))
+let F cfg = Rotate (-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.TubeThickness, cfg.ChairRest)),2.0 * weightMetalNormal cfg (cfg.ChairRest * 1.0<mm>)
 
-let G cfg = R ((0.0, cfg.TubeThickness),cfg.ChairBase,cfg.ChairThicknes)
+let G cfg = R ((0.0, cfg.TubeThickness),cfg.ChairBase,cfg.ChairThicknes),weightWood cfg (cfg.ChairBase * 1.0<mm>) (cfg.ChairWidth  * 1.0<mm>) (cfg.ChairThicknes  * 1.0<mm>) 
 
-let H cfg = Rotate (90.0-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.ChairRest,cfg.ChairThicknes))
-
-
-
+let H cfg = Rotate (90.0-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.ChairRest,cfg.ChairThicknes)),weightWood cfg (cfg.ChairRest * 1.0<mm>) (cfg.ChairWidth  * 1.0<mm>) (cfg.ChairThicknes  * 1.0<mm>) 
 
 let toShape cfg (makePart:Config -> part) = 
     let makePolygon (points:list<Point>) =
@@ -109,7 +112,10 @@ let centroid (polygon:Polygon) =
     let f  (xSum, ySum, n) (p:Point) = 
         (xSum + p.X,ySum + p.Y,n + 1.0)
 
-    let x,y,n  = List.ofSeq(polygon.Points)|>List.fold f seed
+    let rotate (p:Point) = 
+        polygon.RenderTransform.Value.Transform(p)
+
+    let x,y,n  = List.ofSeq(polygon.Points)|>List.map rotate |>List.fold f seed
     
     new Point(x/ n, y/n)
 
@@ -123,7 +129,12 @@ let centerOfGravity (components: list<Point*float>) =
 type Part ={
     Polygon:Polygon;
     Centroid:Point;
-    Weight:float;
+    Weight:float<g>;
+}
+
+type Object2D={
+    Parts:list<Part>;
+    CenterOfGravity:Point*float;
 }
 
 
@@ -145,7 +156,17 @@ type PartFactory() =
         WoodDensity=0.00093;//<g/mm^3>
     }
     member this.Create cfg =
-        let shapeForConfig = toShape cfg
-
-        [A ;B ;C ;D ;E ; F ; G ; H ] |> List.map shapeForConfig
+        let shapeForConfig s =
+            let _, weight = s cfg
+            let shape = toShape cfg (fun c->fst (s c));
+            {
+                Polygon = shape;
+                Centroid = centroid shape;
+                Weight = weight
+            }
+        let parts = [A ;B ;C ;D ;E ; F ; G ; H ] |> List.map shapeForConfig
+        {
+            Parts = parts;
+            CenterOfGravity = parts |> List.map (fun p -> (p.Centroid, (float p.Weight))) |>  centerOfGravity 
+        }
     
