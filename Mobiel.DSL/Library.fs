@@ -101,8 +101,21 @@ module MyShapes =
     let H cfg = Rotate (90.0-cfg.AplhaInDegrees, R ((cfg.ChairBase, cfg.TubeThickness),cfg.ChairRest,cfg.ChairThicknes)),weightWood cfg (cfg.ChairRest * 1.0<mm>) (cfg.ChairWidth  * 1.0<mm>) (cfg.ChairThicknes  * 1.0<mm>) 
 
     let Anker cfg = ( lengthD cfg ) + cfg.TubeThickness / 2.0 , cfg.RectangleHeight + 2.0 * cfg.TubeThickness + cfg.AttachmentHook
+    //let Anker cfg = (225.0,430.0)
+
+    let Z cfg = [A;B;C;D;E;F;G;H] |> List.map (fun x-> x cfg)
 
 module Parsing =
+    open Types
+
+    type Code ={
+        Code:string
+        }
+
+    type DrawingInput = {
+        Parts:list<part*float<g>>;
+        Anker:Point
+        }
     open FParsec
     open Types
     open MyShapes
@@ -111,24 +124,59 @@ module Parsing =
         match run p str with
         | Success(result, _, _)   -> printfn "Success: %A" result
         | Failure(errorMsg, _, _) -> printfn "Failure: %s" errorMsg
-
     
-    let str s = pstring s
     //let sepByComma = (str ",") |> sepBy
     //let floatCommaFloat = sepByComma pfloat
-    let coordinates = pfloat .>>. (str "," >>. pfloat)
-    let surroundedBy s1 s2 p = str s1 >>. p .>> str s2
-    let pointParser = tuple3 (coordinates |> surroundedBy "(" ")") (str "," >>. pfloat) (str "," >>. pfloat)
-    let v = run pointParser "(0,0),200,20"
-    let rect def = 
-        match def with
-            | Success(result, _, _)   -> R result
-            | Failure(errorMsg, _, _) -> failwith errorMsg
-    let X (cfg:Config) = ((rect v),10000.0<g>)
+    //let v = run (many rectangleParser) "(200,200),-20,200(200,200),200,20(400,200),20,200(400,400),-200,-20"
+    //let firstlight =
+    //    match (toRectangles v) with
+    //        | [] -> []
+    //        | head::tail -> (head, 1000.0<g>) :: (tail |> List.map (fun r -> (r,100.0<g>)))
+    //let X (cfg:Config) = firstlight
+    
+    let addSomeWeights rectangles = 
+        match rectangles with
+            | [] -> []
+            | head::tail -> (head, 1000.0<g>) :: (tail |> List.map (fun r -> (r,100.0<g>)))
+    
 
-open Parsing
+    let ws = spaces
+    let str s = pstring s
+    let str_ws s = str s .>> ws
+    let float_ws = pfloat .>> ws
+
+    let surroundedBy s1 s2 p = str_ws s1 >>. p .>> str_ws s2
+    let commaFloat = (str_ws "," >>. float_ws)
+    let floatCoordinates = float_ws .>>. commaFloat |> surroundedBy "(" ")"
+
+    let ankerParser= str_ws "A" >>. floatCoordinates
+
+    let rectangleParser = str_ws "R" >>. tuple4 floatCoordinates commaFloat commaFloat commaFloat
+    let rectanglesParser = many rectangleParser
+    let toRectangles parsed =
+        match parsed with 
+            |Success(result,_,_) -> result |> List.map R
+            | Failure(errorMsg, _, _) -> failwith errorMsg
+    let createDrawingInput anker rectangles =
+        let map ((x,y),width,height,weight) =
+            (R ((x,y),width,height), weight * 1.0<g>)
+        {
+            Anker = {
+                X = fst anker; 
+                Y = snd anker
+            }
+            Parts = rectangles |> List.map map
+        }
+    let drawingInputParser = pipe2 ankerParser rectanglesParser createDrawingInput
+    let parse = run drawingInputParser
+    let parseOrFail input =
+        match parse input with 
+            |Success(result,_,_) -> result
+            | Failure(errorMsg, _, _) -> failwith errorMsg
+
 
 module Gravity =
+    open Parsing
     open Shared
     open Types
     open MyShapes
@@ -154,7 +202,7 @@ module Gravity =
         let point3 = { X = xnew +  pointAnker.X; Y =  ynew + pointAnker.Y}
         point3
 
-    let toShape cfg (makePart:Config -> part) = 
+    let toShape (part:part) = 
         let rotate angle (points:list<Point>) =
             let rotateAroundFirst = rotatePoint angle points.[0]
             points |> List.map rotateAroundFirst
@@ -165,7 +213,7 @@ module Gravity =
                 | R(_,_,_) -> part |> RtoP |> partToShape
                 | Rotate(angle, p) -> p |> partToShape |> rotate angle
     
-        cfg |> makePart |> partToShape
+        part |> partToShape
 
     let centroid (points:list<Point>) =
         let seed = (0.0,0.0,0.0);
@@ -193,16 +241,23 @@ module Gravity =
     }
 
     type Object2D={
+        OldParts:list<Part>;
         Parts:list<Part>;
+        OldCenterOfGravity:Point;
         CenterOfGravity:Point;
         Weight:float;
+        AnkerPoint:Point;
     }
 
     let performGravitationalPull object anker =
-        let gravitationalPullAngle anker center =   
-            angleBetween {X=anker.X; Y=anker.Y - 100.0} anker center
+        let gravitationalPullAngle anker center =
+            let diff = anker.X - center.X
+            let abs = Math.Abs (diff)
+            let direction = diff/abs
+            degrees direction * angleBetween {X=anker.X; Y= anker.Y - 100.0} anker center
+
         let angle = gravitationalPullAngle anker object.CenterOfGravity
-        let rot = rotatePoint (degrees -angle) anker
+        let rot = rotatePoint angle anker
         let mapPart part =
             { part with 
                 Polygon = part.Polygon |> List.map rot;
@@ -231,27 +286,32 @@ module Gravity =
             TubeThickness=30.0;//<mm>;
             WoodDensity=0.00093;//<g/mm^3>
         }
-        member this.Create cfg =
-            let v1 = v
-
-            
-            let shapeForConfig s =
-                let _, weight = s cfg
-                let shape = toShape cfg (fun c->fst (s c));
+        member this.Create cfg code =
+            let toPart (part, weight) =
+                let shape = toShape part;
                 {
                     Polygon = shape;
                     Centroid = centroid shape;
                     Weight = weight
                 }
-            let parts = [A ;B ;C ;D ;E ; F ; G ; H; X ] |> List.map shapeForConfig
+                
+            let input = code.Code |> parseOrFail
+
+            //let parts = cfg |> Z |> List.map toPart
+            let parts = input.Parts |> List.map toPart
+
             let center,weight =  parts |> List.map (fun p -> (p.Centroid, (float p.Weight))) |>  centerOfGravity 
             let result = {
+                OldParts = parts;
                 Parts = parts;
+                OldCenterOfGravity = center;
                 CenterOfGravity = center;
                 Weight = weight;
+                AnkerPoint = input.Anker;
             }
-
-            cfg |> Anker |> toPoint |>  performGravitationalPull result
+            //
+            //result
+            input.Anker|>  performGravitationalPull result
 
 
 

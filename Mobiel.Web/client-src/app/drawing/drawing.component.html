@@ -1,7 +1,13 @@
-<div *ngIf="drawing">
-  <svg [attr.width]="width" [attr.height]="height" [attr.viewBox]="viewbox" [attr.transform]="transform">
+<div class="border" *ngIf="drawing">
+  <svg [attr.viewBox]="viewbox" [attr.transform]="transform">
+    <!--<svg:rect x="0" y="0" [attr.width]="width" [attr.height]="height" stroke="red" fill="none " />
+  <svg:rect [attr.x]="ymin" [attr.y]="ymin" [attr.width]="width+600" [attr.height]="height+600" stroke="blue" fill="none " />-->
+    <svg:g *ngFor="let part of drawing.oldParts; let i=index" app-part [part]="part" [old]="true" />
     <svg:g *ngFor="let part of drawing.parts; let i=index" app-part [part]="part" [color]="colors[i]" />
+    <svg:circle stroke="black" stroke-dasharray="1,10" fill="none" r="7" [attr.cx]="drawing.oldCenterOfGravity.x" [attr.cy]="drawing.oldCenterOfGravity.y" />
     <svg:circle fill="red" r="7" [attr.cx]="drawing.centerOfGravity.x" [attr.cy]="drawing.centerOfGravity.y" />
     <svg:g app-arrow [point]="drawing.centerOfGravity" [length]="drawing.weight/30" [color]="'red'" />
+    <svg:circle fill="none" stroke="black" r="9" [attr.cx]="drawing.ankerPoint.x" [attr.cy]="drawing.ankerPoint.y" />
+    <svg:circle fill="black" stroke="black" r="1" [attr.cx]="drawing.ankerPoint.x" [attr.cy]="drawing.ankerPoint.y" />
   </svg>
 </div>

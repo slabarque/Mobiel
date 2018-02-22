@@ -14,9 +14,12 @@ export class Part {
 }
 
 export class Object2D {
+  oldParts: Part[];
   parts: Part[];
+  oldCenterOfGravity: Point;
   centerOfGravity: Point;
   weight: number;
+  ankerPoint: Point;
 }
 
 @Injectable()
@@ -24,10 +27,10 @@ export class DrawingService {
 
   constructor(private http: HttpClient) { }
 
-  drawingUrl = 'api/shapes';
+  drawingUrl = 'api/drawing';
 
-  getDrawing(): Observable<Object2D> {
-    return this.http.get<Object2D>(this.drawingUrl);
+  getDrawing(code:string): Observable<Object2D> {
+    return this.http.post<Object2D>(this.drawingUrl, { code: code });
   }
 
 }

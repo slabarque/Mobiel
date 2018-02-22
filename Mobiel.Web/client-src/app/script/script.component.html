@@ -1,0 +1,8 @@
+<div class="border">
+  <codemirror [(ngModel)]="code"
+              [config]="options"
+              (focus)="onFocus()"
+              (blur)="onBlur()">
+  </codemirror>
+</div>
+<button (click)="updateCode()">How's it hangin'?</button>

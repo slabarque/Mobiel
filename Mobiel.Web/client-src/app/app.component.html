@@ -1,5 +1,18 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <app-drawing></app-drawing>
+<div class="container">
+  <div class="row jumbotron">
+    <h1>How's it hangin'</h1>
+    <p>
+      Specify an ankerpoint like this: "A (x, y)". Then some rectangles with their weight like this: "R (x,y), width, height, weight".
+      And the button calculates how all the rectangles glued together will behave when hung from the ankerpoint</p>
+  </div>
+  <div class="row">
+    <div class="col-sm-12 col-md-4">
+      <app-script (codeUpdated)="recalculateDrawing($event)"></app-script>
+    </div>
+    <div class="col-sm-12 col-md-8">
+      <app-drawing [drawing]="drawing"></app-drawing>
+    </div>
+  </div>
 </div>
 

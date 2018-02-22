@@ -8,15 +8,15 @@ using Mobiel.DSL;
 namespace Mobiel.Web.Controllers
 {
   [Route("api/[controller]")]
-  public class ShapesController : Controller
+  public class DrawingController : Controller
   {
     // GET api/values
-    [HttpGet]
-    public Gravity.Object2D Get()
+    [HttpPost]
+    public Gravity.Object2D Post([FromBody]Parsing.Code code)
     {
       Gravity.PartFactory factory = new Gravity.PartFactory();
 
-      return factory.Create(factory.Config);
+      return factory.Create(factory.Config, code);
     }
   }
 }

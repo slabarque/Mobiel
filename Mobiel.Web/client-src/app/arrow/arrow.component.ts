@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Point } from '../drawing/service/drawing.service';
+import { Point } from '../service/drawing.service';
 
 @Component({
   selector: '[app-arrow]',

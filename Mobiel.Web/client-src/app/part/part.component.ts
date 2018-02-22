@@ -1,5 +1,5 @@
 import { Component, OnInit, OnChanges, Input } from '@angular/core';
-import { Part, Point } from '../drawing/service/drawing.service';
+import { Part, Point } from '../service/drawing.service';
 
 @Component({
   selector: '[app-part]',
@@ -8,7 +8,8 @@ import { Part, Point } from '../drawing/service/drawing.service';
 })
 export class PartComponent implements OnInit, OnChanges {
   @Input() part: Part;
-  @Input() color: string;
+  @Input() old: boolean;
+  @Input() color: string = "black";
   pointsString: string;
 
   constructor() {
