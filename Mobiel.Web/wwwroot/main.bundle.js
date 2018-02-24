@@ -242,7 +242,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../client-src/app/drawing/drawing.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"border\" *ngIf=\"drawing\">\r\n  <svg [attr.viewBox]=\"viewbox\" [attr.transform]=\"transform\">\r\n    <!--<svg:rect x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\" stroke=\"red\" fill=\"none \" />\r\n  <svg:rect [attr.x]=\"ymin\" [attr.y]=\"ymin\" [attr.width]=\"width+600\" [attr.height]=\"height+600\" stroke=\"blue\" fill=\"none \" />-->\r\n    <svg:g *ngFor=\"let part of drawing.oldParts; let i=index\" app-part [part]=\"part\" [old]=\"true\" />\r\n    <svg:g *ngFor=\"let part of drawing.parts; let i=index\" app-part [part]=\"part\" [color]=\"colors[i]\" />\r\n    <svg:circle stroke=\"black\" stroke-dasharray=\"1,10\" fill=\"none\" r=\"7\" [attr.cx]=\"drawing.oldCenterOfGravity.x\" [attr.cy]=\"drawing.oldCenterOfGravity.y\" />\r\n    <svg:circle fill=\"red\" r=\"7\" [attr.cx]=\"drawing.centerOfGravity.x\" [attr.cy]=\"drawing.centerOfGravity.y\" />\r\n    <svg:g app-arrow [point]=\"drawing.centerOfGravity\" [length]=\"drawing.weight/30\" [color]=\"'red'\" />\r\n    <svg:circle fill=\"none\" stroke=\"black\" r=\"9\" [attr.cx]=\"drawing.ankerPoint.x\" [attr.cy]=\"drawing.ankerPoint.y\" />\r\n    <svg:circle fill=\"black\" stroke=\"black\" r=\"1\" [attr.cx]=\"drawing.ankerPoint.x\" [attr.cy]=\"drawing.ankerPoint.y\" />\r\n  </svg>\r\n</div>\r\n"
+module.exports = "<div class=\"border rounded\" *ngIf=\"drawing\">\r\n  <svg *ngIf=\"drawing\" [attr.viewBox]=\"viewbox\" [attr.transform]=\"transform\">\r\n    <!--<svg:rect x=\"0\" y=\"0\" [attr.width]=\"width\" [attr.height]=\"height\" stroke=\"red\" fill=\"none \" />\r\n  <svg:rect [attr.x]=\"ymin\" [attr.y]=\"ymin\" [attr.width]=\"width+600\" [attr.height]=\"height+600\" stroke=\"blue\" fill=\"none \" />-->\r\n    <svg:g *ngFor=\"let part of drawing.oldParts; let i=index\" app-part [part]=\"part\" [old]=\"true\" />\r\n    <svg:g *ngFor=\"let part of drawing.parts; let i=index\" app-part [part]=\"part\" [color]=\"colors[i]\" />\r\n    <svg:circle stroke=\"black\" stroke-dasharray=\"1,10\" fill=\"none\" r=\"7\" [attr.cx]=\"drawing.oldCenterOfGravity.x\" [attr.cy]=\"drawing.oldCenterOfGravity.y\" />\r\n    <svg:circle fill=\"red\" r=\"7\" [attr.cx]=\"drawing.centerOfGravity.x\" [attr.cy]=\"drawing.centerOfGravity.y\" />\r\n    <svg:g app-arrow [point]=\"drawing.centerOfGravity\" [length]=\"drawing.weight/30\" [color]=\"'red'\" />\r\n    <svg:circle fill=\"none\" stroke=\"black\" r=\"9\" [attr.cx]=\"drawing.ankerPoint.x\" [attr.cy]=\"drawing.ankerPoint.y\" />\r\n    <svg:circle fill=\"black\" stroke=\"black\" r=\"1\" [attr.cx]=\"drawing.ankerPoint.x\" [attr.cy]=\"drawing.ankerPoint.y\" />\r\n  </svg>\r\n</div>\r\n"
 
 /***/ }),
 
@@ -359,14 +359,16 @@ var drawing_service_1 = __webpack_require__("../../../../../client-src/app/servi
 var PartComponent = /** @class */ (function () {
     function PartComponent() {
         this.color = "black";
-        //this.pointsString = "125,30 125,30 125,30 31.9,63.2 46.1,186.3 125,230 125,230 125,230 203.9,186.3 218.1,63.2"
+        this.pointsString = "";
     }
     PartComponent.prototype.ngOnInit = function () {
-        //this.pointsString = this.points[0][0] + "," + this.points[0][1] + " " + this.points[1][0] + "," + this.points[1][1] + " " + this.points[2][0] + "," + this.points[2][1] + " " + this.points[3][0] + "," + this.points[3][1];
     };
     PartComponent.prototype.ngOnChanges = function () {
-        var p = this.part.polygon;
-        this.pointsString = p[0].x + "," + p[0].y + " " + p[1].x + "," + p[1].y + " " + p[2].x + "," + p[2].y + " " + p[3].x + "," + p[3].y;
+        var points = this.part.polygon;
+        for (var _i = 0, points_1 = points; _i < points_1.length; _i++) {
+            var point = points_1[_i];
+            this.pointsString += point.x + "," + point.y + " ";
+        }
     };
     __decorate([
         core_1.Input(),
@@ -416,7 +418,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../client-src/app/script/script.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"border\">\r\n  <codemirror [(ngModel)]=\"code\"\r\n              [config]=\"options\"\r\n              (focus)=\"onFocus()\"\r\n              (blur)=\"onBlur()\">\r\n  </codemirror>\r\n</div>\r\n<button (click)=\"updateCode()\">How's it hangin'?</button>\r\n"
+module.exports = "<div class=\"border mb-2 rounded\">\r\n  <codemirror [(ngModel)]=\"code\"\r\n              [config]=\"options\"\r\n              (focus)=\"onFocus()\"\r\n              (blur)=\"onBlur()\">\r\n  </codemirror>\r\n</div>\r\n<button type=\"button\" class=\"btn btn-primary btn-block\" (click)=\"updateCode()\">How's it hangin'?</button>\r\n"
 
 /***/ }),
 

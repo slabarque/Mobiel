@@ -134,46 +134,53 @@ module Parsing =
     //        | head::tail -> (head, 1000.0<g>) :: (tail |> List.map (fun r -> (r,100.0<g>)))
     //let X (cfg:Config) = firstlight
     
-    let addSomeWeights rectangles = 
-        match rectangles with
-            | [] -> []
-            | head::tail -> (head, 1000.0<g>) :: (tail |> List.map (fun r -> (r,100.0<g>)))
-    
-
+    //let addSomeWeights rectangles = 
+    //    match rectangles with
+    //        | [] -> []
+    //        | head::tail -> (head, 1000.0<g>) :: (tail |> List.map (fun r -> (r,100.0<g>)))
+    //let toRectangles parsed =
+    //    match parsed with 
+    //        |Success(result,_,_) -> result |> List.map R
+    //        | Failure(errorMsg, _, _) -> failwith errorMsg
     let ws = spaces
     let str s = pstring s
     let str_ws s = str s .>> ws
     let float_ws = pfloat .>> ws
-
     let surroundedBy s1 s2 p = str_ws s1 >>. p .>> str_ws s2
     let commaFloat = (str_ws "," >>. float_ws)
     let floatCoordinates = float_ws .>>. commaFloat |> surroundedBy "(" ")"
+    let point = floatCoordinates|>> (fun (x,y) -> {X=x;Y=y})
+    let commaFloatCoordinates = (str_ws "," >>. floatCoordinates)
+    let commaPoint = (str_ws "," >>. point)
+    
+    //anker
+    let ankerPoint= str_ws "A" >>. point
+    
+    //parts
+    let createRectangle ((x,y),width,height,weight) =
+        R ((x,y),width,height), weight * 1.0<g>
+    let rectangle = str_ws "R" >>. tuple4 floatCoordinates commaFloat commaFloat commaFloat |>> createRectangle
+    let createPolygon coordinates weight =
+        P coordinates, weight * 1.0<g>
+    let coordinatesList = sepEndBy1 (attempt floatCoordinates) (attempt (str_ws ","))
+    let polygon = str_ws "P" >>. pipe2 coordinatesList float_ws createPolygon//TODO: it possible to leave out the comma before the weight
+    let rotate, rotateImpl = createParserForwardedToRef()
+    let part = rectangle <|> polygon <|> rotate
+    rotateImpl := str_ws "Turn" >>. float_ws .>>.  (str_ws "," >>. part) |>> (fun (angle, (part, weight)) -> (Rotate (angle, part)), weight)
+    let parts = many part
 
-    let ankerParser= str_ws "A" >>. floatCoordinates
-
-    let rectangleParser = str_ws "R" >>. tuple4 floatCoordinates commaFloat commaFloat commaFloat
-    let rectanglesParser = many rectangleParser
-    let toRectangles parsed =
-        match parsed with 
-            |Success(result,_,_) -> result |> List.map R
-            | Failure(errorMsg, _, _) -> failwith errorMsg
+    //drawinginput
     let createDrawingInput anker rectangles =
-        let map ((x,y),width,height,weight) =
-            (R ((x,y),width,height), weight * 1.0<g>)
         {
-            Anker = {
-                X = fst anker; 
-                Y = snd anker
-            }
-            Parts = rectangles |> List.map map
+            Anker = anker;
+            Parts = rectangles
         }
-    let drawingInputParser = pipe2 ankerParser rectanglesParser createDrawingInput
-    let parse = run drawingInputParser
+    let drawingInput = pipe2 ankerPoint parts createDrawingInput
+    let parse = run drawingInput
     let parseOrFail input =
         match parse input with 
             |Success(result,_,_) -> result
             | Failure(errorMsg, _, _) -> failwith errorMsg
-
 
 module Gravity =
     open Parsing

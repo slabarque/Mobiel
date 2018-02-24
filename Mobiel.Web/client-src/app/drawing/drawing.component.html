@@ -1,5 +1,5 @@
-<div class="border" *ngIf="drawing">
-  <svg [attr.viewBox]="viewbox" [attr.transform]="transform">
+<div class="border rounded" *ngIf="drawing">
+  <svg *ngIf="drawing" [attr.viewBox]="viewbox" [attr.transform]="transform">
     <!--<svg:rect x="0" y="0" [attr.width]="width" [attr.height]="height" stroke="red" fill="none " />
   <svg:rect [attr.x]="ymin" [attr.y]="ymin" [attr.width]="width+600" [attr.height]="height+600" stroke="blue" fill="none " />-->
     <svg:g *ngFor="let part of drawing.oldParts; let i=index" app-part [part]="part" [old]="true" />
