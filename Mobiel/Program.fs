@@ -149,15 +149,23 @@ let main argv =
         let angle = Math.Acos(lengthCos/lengthLeg)
         degrees angle
                 
-    
-    let D = centroid (polygonD chairBase chairIndent tubeThickness)
-    let B = centroid (polygonB chairBase chairIndent tubeThickness rectangleHeight)
-    let E = centroid (polygonE chairBase chairIndent tubeThickness)
-    let F = centroid (polygonF chairBase tubeThickness chairRest aplhaInDegrees)
-    let A = centroid (polygonA chairBase chairIndent tubeThickness rectangleHeight)
-    let C = centroid (polygonC chairBase chairIndent tubeThickness)
-    let G = centroid (chairBottom chairBase chairThicknes tubeThickness)
-    let H = centroid (chairBack chairBase chairRest chairThicknes tubeThickness aplhaInDegrees)
+    let polA = polygonA chairBase chairIndent tubeThickness rectangleHeight
+    let polB = polygonB chairBase chairIndent tubeThickness rectangleHeight
+    let polC = polygonC chairBase chairIndent tubeThickness
+    let polD = polygonD chairBase chairIndent tubeThickness
+    let polE = polygonE chairBase chairIndent tubeThickness
+    let polF = polygonF chairBase tubeThickness chairRest aplhaInDegrees
+    let polG = chairBottom chairBase chairThicknes tubeThickness
+    let polH = chairBack chairBase chairRest chairThicknes tubeThickness aplhaInDegrees
+
+    let D = centroid (polD)
+    let B = centroid (polB)
+    let E = centroid (polE)
+    let F = centroid (polF)
+    let A = centroid (polA)
+    let C = centroid (polC)
+    let G = centroid (polG)
+    let H = centroid (polH)
     let weightA = weightMetalStrong (rectangleWidth+tubeThickness+tubeThickness)
     let weightB = (weightMetalNormal rectangleHeight)*float coefficientDoubles
     let weightC = weightMetalStrong (rectangleWidth+tubeThickness+tubeThickness)
@@ -202,4 +210,6 @@ let main argv =
     printfn "H: %A : %A" H weightH
     printfn "Center: %A" center
     printfn "Angle: %Adegrees" angle
+
+    let key = Console.ReadKey()
     0 // return an integer exit code
